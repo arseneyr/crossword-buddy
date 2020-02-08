@@ -5,7 +5,8 @@ var webpack = require("webpack"),
   CleanWebpackPlugin = require("clean-webpack-plugin").CleanWebpackPlugin,
   CopyWebpackPlugin = require("copy-webpack-plugin"),
   HtmlWebpackPlugin = require("html-webpack-plugin"),
-  WriteFilePlugin = require("write-file-webpack-plugin");
+  WriteFilePlugin = require("write-file-webpack-plugin"),
+  ManifestPlugin = require("webpack-manifest-plugin");
 
 // load the secrets
 var alias = {};
@@ -32,13 +33,15 @@ if (fileSystem.existsSync(secretsPath)) {
 var options = {
   mode: process.env.NODE_ENV || "development",
   entry: {
-    popup: path.join(__dirname, "src", "js", "popup.js"),
-    options: path.join(__dirname, "src", "js", "options.js"),
-    background: path.join(__dirname, "src", "js", "background.js")
+    popup: path.resolve(__dirname, "src", "js", "popup.js"),
+    options: path.resolve(__dirname, "src", "js", "options.js"),
+    background: path.resolve(__dirname, "src", "js", "background.js"),
+    content: path.resolve(__dirname, "src", "js", "content.js")
   },
   output: {
-    path: path.join(__dirname, "build"),
-    filename: "[name].bundle.js"
+    path: path.resolve(__dirname, "build"),
+    filename: "[name].bundle.js",
+    publicPath: `http://127.0.0.1:${env.PORT}/`
   },
   module: {
     rules: [
@@ -67,7 +70,7 @@ var options = {
     new CleanWebpackPlugin(),
     // expose and write the allowed env vars on the compiled bundle
     new webpack.EnvironmentPlugin(["NODE_ENV"]),
-    new CopyWebpackPlugin([
+    /*new CopyWebpackPlugin([
       {
         from: "src/manifest.json",
         transform: function(content, path) {
@@ -81,21 +84,27 @@ var options = {
           );
         }
       }
-    ]),
+    ]),*/
+    new ManifestPlugin({
+      generate: (_, __, entrypoints) => {
+        let manifest = require(path.resolve(__dirname, "src/manifest.json"));
+        manifest.background.scripts = entrypoints.background;
+        manifest.content_scripts[0].js = entrypoints.content;
+        manifest.description = process.env.npm_package_description;
+        manifest.version = process.env.npm_package_version;
+        return manifest;
+      },
+      writeToFileEmit: true
+    }),
     new HtmlWebpackPlugin({
-      template: path.join(__dirname, "src", "popup.html"),
+      template: path.resolve(__dirname, "src", "popup.html"),
       filename: "popup.html",
       chunks: ["popup"]
     }),
     new HtmlWebpackPlugin({
-      template: path.join(__dirname, "src", "options.html"),
+      template: path.resolve(__dirname, "src", "options.html"),
       filename: "options.html",
       chunks: ["options"]
-    }),
-    new HtmlWebpackPlugin({
-      template: path.join(__dirname, "src", "background.html"),
-      filename: "background.html",
-      chunks: ["background"]
     }),
     new WriteFilePlugin()
   ]

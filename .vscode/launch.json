@@ -8,7 +8,7 @@
       "type": "chrome",
       "request": "launch",
       "name": "Launch Chrome against localhost",
-      "url": "chrome://extensions",
+      "url": "https://nytimes.com/crosswords/game/daily/f",
       "webRoot": "${workspaceFolder}",
       "userDataDir": "${workspaceFolder}/.vscode/ChromeData",
       "runtimeArgs": ["--load-extension=${workspaceFolder}\\build"]
