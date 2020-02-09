@@ -19,5 +19,5 @@
     }
   ],
   "manifest_version": 2,
-  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
+  "content_security_policy": "script-src 'self' 'unsafe-eval' http://127.0.0.1:3000; object-src 'self'"
 }

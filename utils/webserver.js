@@ -4,24 +4,6 @@ var WebpackDevServer = require("webpack-dev-server"),
   env = require("./env"),
   path = require("path");
 
-var options = config.chromeExtensionBoilerplate || {};
-var excludeEntriesToHotReload = options.notHotReload || [];
-
-/*for (var entryName in config.entry) {
-  if (excludeEntriesToHotReload.indexOf(entryName) === -1) {
-    config.entry[entryName] = [
-      "webpack-dev-server/client?http://127.0.0.1:" + env.PORT,
-      "webpack/hot/dev-server"
-    ].concat(config.entry[entryName]);
-  }
-}*/
-
-config.plugins = [
-  new webpack.HotModuleReplacementPlugin({ multiStep: true })
-].concat(config.plugins || []);
-
-delete config.chromeExtensionBoilerplate;
-
 const wdsConfig = {
   hot: true,
   contentBase: path.join(__dirname, "../build"),
@@ -31,11 +13,26 @@ const wdsConfig = {
   },
   disableHostCheck: true,
   public: `http://127.0.0.1:${env.PORT}`,
-  host: "127.0.0.1",
-  transportMode: "ws"
+  host: "127.0.0.1"
 };
 
+// Remove the content entry point to disable HMR inside it
+const content = config.entry.content;
+delete config.entry.content;
+
+if (config.entry.background) {
+  const background = Array.isArray(config.entry.background)
+    ? config.entry.background
+    : [config.entry.background];
+  background.unshift(path.resolve(__dirname, "../src/js/reloader.js"));
+  config.entry.background = background;
+}
+
 WebpackDevServer.addDevServerEntrypoints(config, wdsConfig);
+
+config.entry.content = content;
+wdsConfig.injectHot = false;
+wdsConfig.injectClient = false;
 
 var compiler = webpack(config);
 
