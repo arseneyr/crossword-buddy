@@ -13,26 +13,13 @@ const wdsConfig = {
   },
   disableHostCheck: true,
   public: `http://127.0.0.1:${env.PORT}`,
-  host: "127.0.0.1"
+  host: "127.0.0.1",
+  transportMode: "ws"
 };
 
-// Remove the content entry point to disable HMR inside it
-const content = config.entry.content;
-delete config.entry.content;
-
-if (config.entry.background) {
-  const background = Array.isArray(config.entry.background)
-    ? config.entry.background
-    : [config.entry.background];
-  background.unshift(path.resolve(__dirname, "../src/js/reloader.js"));
-  config.entry.background = background;
+if (config.entry.content) {
+  config.entry.content = path.resolve(__dirname, "../src/js/hmr.js");
 }
-
-WebpackDevServer.addDevServerEntrypoints(config, wdsConfig);
-
-config.entry.content = content;
-wdsConfig.injectHot = false;
-wdsConfig.injectClient = false;
 
 var compiler = webpack(config);
 
