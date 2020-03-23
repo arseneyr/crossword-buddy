@@ -6,7 +6,8 @@ var webpack = require("webpack"),
   CopyWebpackPlugin = require("copy-webpack-plugin"),
   HtmlWebpackPlugin = require("html-webpack-plugin"),
   WriteFilePlugin = require("write-file-webpack-plugin"),
-  ManifestPlugin = require("webpack-manifest-plugin");
+  ReloadPlugin = require("./ReloadPlugin"),
+  DotenvPlugin = require("dotenv-webpack");
 
 // load the secrets
 var alias = {};
@@ -31,17 +32,19 @@ if (fileSystem.existsSync(secretsPath)) {
 }
 
 var options = {
+  context: path.resolve(__dirname, "src"),
   mode: process.env.NODE_ENV || "development",
   entry: {
-    popup: path.resolve(__dirname, "src", "js", "popup.js"),
-    options: path.resolve(__dirname, "src", "js", "options.js"),
-    background: path.resolve(__dirname, "src", "js", "background.js"),
-    content: path.resolve(__dirname, "src", "js", "content.js")
+    popup: "./js/popup.js",
+    options: "./js/options.js",
+    background: "./js/background.js",
+    content: "./js/content/content",
+    injected: "./js/content/injected",
+    client: "./js/client/client"
   },
   output: {
-    path: path.resolve(__dirname, "build"),
-    filename: "[name].bundle.js",
-    publicPath: `http://127.0.0.1:${env.PORT}/`
+    path: path.join(__dirname, "build"),
+    filename: "[name].bundle.js"
   },
   module: {
     rules: [
@@ -59,20 +62,32 @@ var options = {
         test: /\.html$/,
         loader: "html-loader",
         exclude: /node_modules/
+      },
+      {
+        test: /\.((j|t)sx?)$/,
+        loader: "babel-loader",
+        exclude: /node_modules/
       }
     ]
   },
   resolve: {
-    alias: alias
+    alias: alias,
+    extensions: fileExtensions
+      .map(extension => "." + extension)
+      .concat([".jsx", ".js", ".ts", ".tsx", ".css"])
   },
   plugins: [
+    new ReloadPlugin({
+      contentScripts: ["content"],
+      backgroundScript: "background"
+    }),
     // clean the build folder
     new CleanWebpackPlugin(),
     // expose and write the allowed env vars on the compiled bundle
-    new webpack.EnvironmentPlugin(["NODE_ENV"]),
-    /*new CopyWebpackPlugin([
+    new DotenvPlugin(),
+    new CopyWebpackPlugin([
       {
-        from: "src/manifest.json",
+        from: "./manifest.json",
         transform: function(content, path) {
           // generates the manifest file using the package.json informations
           return Buffer.from(
@@ -84,34 +99,28 @@ var options = {
           );
         }
       }
-    ]),*/
-    new ManifestPlugin({
-      generate: (_, __, entrypoints) => {
-        let manifest = require(path.resolve(__dirname, "src/manifest.json"));
-        manifest.background.scripts = entrypoints.background;
-        manifest.content_scripts[0].js = entrypoints.content;
-        manifest.description = process.env.npm_package_description;
-        manifest.version = process.env.npm_package_version;
-        return manifest;
-      },
-      writeToFileEmit: true
-    }),
+    ]),
     new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, "src", "popup.html"),
+      template: path.join(__dirname, "src", "popup.html"),
       filename: "popup.html",
       chunks: ["popup"]
     }),
     new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, "src", "options.html"),
+      template: path.join(__dirname, "src", "options.html"),
       filename: "options.html",
       chunks: ["options"]
+    }),
+    new HtmlWebpackPlugin({
+      template: "./client.html",
+      filename: "client.html",
+      chunks: ["client"]
     }),
     new WriteFilePlugin()
   ]
 };
 
 if (env.NODE_ENV === "development") {
-  options.devtool = "cheap-module-eval-source-map";
+  options.devtool = "inline-cheap-module-source-map";
 }
 
 module.exports = options;

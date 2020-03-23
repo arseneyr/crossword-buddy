@@ -2,3 +2,6 @@ node_modules
 build
 secrets.*.js
 ChromeData/
+nyt/
+yarn-error*
+*.env

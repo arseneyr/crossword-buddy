@@ -2,6 +2,7 @@
   "name": "Chrome Extension Webpack",
   "options_page": "options.html",
   "background": {
+    "scripts": ["background.bundle.js"],
     "persistent": false
   },
   "browser_action": {
@@ -15,9 +16,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://*.nytimes.com/crosswords/game/daily/*"]
+      "matches": ["https://*.nytimes.com/crosswords/game/daily/*"],
+      "js": ["content.bundle.js"],
+      "run_at": "document_start"
     }
   ],
-  "manifest_version": 2,
-  "content_security_policy": "script-src 'self' 'unsafe-eval' http://127.0.0.1:3000; object-src 'self'"
+  "permissions": ["tabs", "activeTab"],
+  "web_accessible_resources": ["client.html", "injected.bundle.js"],
+  "manifest_version": 2
 }

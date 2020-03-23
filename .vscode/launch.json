@@ -8,10 +8,38 @@
       "type": "chrome",
       "request": "launch",
       "name": "Launch Chrome against localhost",
-      "url": "https://nytimes.com/crosswords/game/daily/f",
+      "url": "https://nytimes.com/crosswords/game/daily/2020/02/08",
       "webRoot": "${workspaceFolder}",
       "userDataDir": "${workspaceFolder}/.vscode/ChromeData",
       "runtimeArgs": ["--load-extension=${workspaceFolder}\\build"]
+    },
+
+    {
+      "name": "Debug Jest Tests",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "--inspect-brk",
+        "${workspaceRoot}/node_modules/jest/bin/jest.js",
+        "--runInBand"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "port": 9229
+    },
+
+    {
+      "name": "TS-NODE",
+      "type": "node",
+      "request": "launch",
+      "args": ["${workspaceRoot}/try.ts"],
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "cwd": "${workspaceRoot}",
+      "protocol": "inspector",
+      "internalConsoleOptions": "openOnSessionStart",
+      "env": {
+        "TS_NODE_IGNORE": "false"
+      }
     }
   ]
 }
