@@ -1,40 +1,34 @@
-import "reflect-metadata";
-import { ClassType } from "class-transformer/ClassTransformer";
-import { transformAndValidateSync } from "class-transformer-validator";
-
-interface ProtocolDescription {
-  [messageType: string]: ClassType<any> | null;
+interface MessageValidator<T> {
+  validate(data: any): T;
 }
 
-type ClassTypeResult<T> = T extends ClassType<infer R> ? R : never;
+export interface ProtocolDescription {
+  [messageType: string]: MessageValidator<any> | false | null;
+}
 
 type Handler<T> = T extends null
   ? () => void
-  : T extends ClassType<infer R>
+  : T extends false
+  ? (payload: any) => void
+  : T extends MessageValidator<infer R>
   ? (payload: R) => void
   : never;
 
 type MessageTable<T extends ProtocolDescription> = {
   [P in keyof T]: {
-    handle: (handler: Handler<T[P]>) => void;
+    handle: (handler: Handler<T[P]>, once?: boolean) => void;
 
     send: Handler<T[P]>;
   };
 };
 
-const p = { fff: Error };
-const m: MessageTable<typeof p> = {
-  fff: {
-    handle: f => {
-      f(new Error());
-    },
-    send: () => {}
-  }
-};
-
 type CustomEvent<
   T extends ProtocolDescription[keyof ProtocolDescription]
-> = T extends ClassType<infer R> ? Event & { payload: R } : Event;
+> = T extends MessageValidator<infer R>
+  ? Event & { payload: R }
+  : T extends false
+  ? Event & { payload: any }
+  : Event;
 
 export default function generateProtocol<T extends ProtocolDescription>(
   validators: T,
@@ -49,25 +43,28 @@ export default function generateProtocol<T extends ProtocolDescription>(
       console.error(`Invalid message received`);
       console.error(message);
     }
-    const validator = validators[message.type];
-    const event = new Event(message.type);
-    if (validator) {
-      try {
+    try {
+      const validator = validators[message.type];
+      const event = new Event(message.type);
+      if (validator !== null) {
         if (!message.payload) {
           throw new Error("No payload found");
         }
-        (event as CustomEvent<
-          typeof validator
-        >).payload = transformAndValidateSync(validator, message.payload, {
-          validator: { whitelist: true }
-        });
-      } catch (e) {
-        console.error(`Message payload failed validation`);
-        console.error(message);
+        if (validator === false) {
+          debugger;
+          (event as CustomEvent<typeof validator>).payload = message.payload;
+        } else {
+          (event as CustomEvent<typeof validator>).payload = validator.validate(
+            message.payload
+          );
+        }
       }
-    }
 
-    eventTarget.dispatchEvent(event);
+      eventTarget.dispatchEvent(event);
+    } catch (e) {
+      console.error(`Message payload failed validation`);
+      console.error(message);
+    }
   };
 
   receiveFunction(receiveHandler);
@@ -101,7 +98,7 @@ export default function generateProtocol<T extends ProtocolDescription>(
   for (const type of Object.keys(validators)) {
     const validator = validators[type];
     (ret as any)[type] = {
-      handle: (handler: Handler<typeof validator>) => {
+      handle: (handler: Handler<typeof validator>, once = false) => {
         eventTarget.addEventListener(
           type,
           (event => {
@@ -111,10 +108,10 @@ export default function generateProtocol<T extends ProtocolDescription>(
               handler((event as CustomEvent<typeof validator>).payload);
             }
           }) as EventListener,
-          false
+          { once }
         );
       },
-      send: (payload: ClassTypeResult<typeof validator>) => {
+      send: (payload: any) => {
         sendFunction({ type, payload: Object.assign({}, payload) });
       }
     };

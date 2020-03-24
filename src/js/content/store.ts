@@ -1,16 +1,19 @@
 import { createAction, createReducer, configureStore } from "@reduxjs/toolkit";
 import protocol from "./injected_protocol";
-import InitialState from "../validator";
+import { TsjsonParser, Validated } from "ts-json-validator";
+import { NYTState } from "../protocol/types";
 
-const setInitialState = createAction<InitialState>("setInitialState");
+type ValidatedType<T> = T extends TsjsonParser<infer R> ? Validated<R> : never;
+
+const setInitialState = createAction<NYTState>("setInitialState");
 
 export interface State {
-  nytState: InitialState | null;
+  nytState: NYTState | null;
 }
 
 const reducer = createReducer<State>({ nytState: null }, builder =>
   builder.addCase(setInitialState, (state, action) => {
-    state.nytState = action.payload.toPlainObj();
+    state.nytState = action.payload as any;
   })
 );
 

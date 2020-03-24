@@ -1,24 +1,13 @@
-import StateValidator from "./validator";
-import { Type } from "class-transformer";
-import { ValidateNested, IsDefined, IsString, IsArray } from "class-validator";
 import { DataConnection } from "peerjs";
 import generateProtocol from "./protocol_generator";
-
-export class InitialStateMessage {
-  @IsString({ each: true })
-  @IsArray()
-  styles!: string[];
-
-  @ValidateNested()
-  @IsDefined()
-  @Type(() => StateValidator)
-  initialState!: StateValidator;
-}
+import schema from "./__schemas__/InitialMessage.schema.json";
+import { InitialMessage } from "./protocol/types";
+import { MessageValidator } from "./validator";
 
 const validators = {
   INIT: null,
   ACK: null,
-  INITIAL_STATE: InitialStateMessage
+  INITIAL_STATE: new MessageValidator<InitialMessage>(schema)
 };
 
 export default function generateMainProtocol(conn: DataConnection) {

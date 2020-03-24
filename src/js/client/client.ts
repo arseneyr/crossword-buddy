@@ -23,7 +23,17 @@ chrome.runtime.onMessage.addListener(id => {
     const conn = peer.connect(id, { reliable: true });
     const protocolTable = generateMainProtocol(conn);
     protocolTable.INIT.handle(() => protocolTable.ACK.send());
-    protocolTable.INITIAL_STATE.handle(console.log);
+    protocolTable.INITIAL_STATE.handle(data => {
+      const { styles, html } = data;
+      styles.forEach((s: string) => {
+        const e = document.createElement("style");
+        e.innerHTML = s;
+        document.head.appendChild(e);
+      });
+      const boardEl = document.createElement("div");
+      document.getElementById("root")!.appendChild(boardEl);
+      boardEl.outerHTML = html;
+    }, true);
     /*conn.on("open", () => {
       console.log("Connection established!");
       conn.on("data", data => {

@@ -24,12 +24,19 @@ if (copyPluginIndex !== -1) {
         from: "./manifest.json",
         transform: function(content) {
           var manifest = JSON.parse(content.toString());
-          var content_security_policy =
-            (manifest.content_security_policy
-              ? manifest.content_security_policy + "; "
-              : "") +
-            `script-src 'self' ${config.output.publicPath}; object-src 'self'`;
-
+          let content_security_policy = `script-src 'self' ${config.output.publicPath}; object-src 'self'`;
+          if (manifest.content_security_policy) {
+            if (manifest.content_security_policy.includes("script-src")) {
+              content_security_policy = manifest.content_security_policy.replace(
+                "script-src",
+                `script-src ${config.output.publicPath}`
+              );
+            } else {
+              content_security_policy =
+                manifest.content_security_policy +
+                `; script-src ${config.output.publicPath}`;
+            }
+          }
           // generates the manifest file using the package.json informations
           return Buffer.from(
             JSON.stringify(

@@ -6,7 +6,8 @@ import { createPeer } from "../peerjs";
 import { useSelector } from "react-redux";
 import store, { State } from "./store";
 import generateProtocol from "../protocol_generator";
-import generateMainProtocol, { InitialStateMessage } from "../main_protocol";
+import generateMainProtocol from "../main_protocol";
+import { TsjsonParser, Validated } from "ts-json-validator";
 
 function getInitialState() {
   /*const clone = document.getElementById("root").cloneNode(true);
@@ -34,6 +35,8 @@ function getInitialState() {
   };*/
 }
 
+type Val<T> = T extends TsjsonParser<infer R> ? Validated<R> : never;
+
 function startConnection() {
   const peer = createPeer();
   peer.on("connection", conn => {
@@ -41,12 +44,14 @@ function startConnection() {
 
     console.log("Connected");
     protocolTable.ACK.handle(() => {
-      const initialStateMessage = new InitialStateMessage();
-      initialStateMessage.styles = Array.prototype.map.call(
-        document.getElementsByTagName("style"),
-        n => n.innerHTML
-      ) as string[];
-      initialStateMessage.initialState = store.getState().nytState!;
+      const initialStateMessage = {
+        styles: Array.prototype.map.call(
+          document.getElementsByTagName("style"),
+          n => n.innerHTML
+        ) as string[],
+        html: document.querySelector("div.layout")!.outerHTML,
+        state: store.getState().nytState!
+      };
       protocolTable.INITIAL_STATE.send(initialStateMessage);
     });
     conn.on("open", () => protocolTable.INIT.send());

@@ -5,3 +5,4 @@ ChromeData/
 nyt/
 yarn-error*
 *.env
+__schemas__/

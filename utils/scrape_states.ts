@@ -71,7 +71,7 @@ async function run() {
         chain.then(results =>
           downloadStuff(browser, y, m, d).then(r => [...results, r])
         ),
-      Promise.resolve([])
+      Promise.resolve([] as any[])
     );
   fs.writeFileSync(
     path.resolve(__dirname, "../nyt/state.json"),

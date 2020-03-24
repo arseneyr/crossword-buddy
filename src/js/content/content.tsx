@@ -7,7 +7,7 @@ import store from "./store";
 
 const s = document.createElement("script");
 s.src = chrome.runtime.getURL("injected.bundle.js");
-s.async = false;
+//s.async = false;
 document.documentElement.appendChild(s);
 
 window.onload = () => {

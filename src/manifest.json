@@ -23,5 +23,6 @@
   ],
   "permissions": ["tabs", "activeTab"],
   "web_accessible_resources": ["client.html", "injected.bundle.js"],
-  "manifest_version": 2
+  "manifest_version": 2,
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
 }

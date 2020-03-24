@@ -3,13 +3,14 @@ import fs from "fs";
 import path from "path";
 import StateValidator from "../src/js/validator";
 import { transformAndValidate } from "class-transformer-validator";
+import { stateParser } from "../src/js/protocol/initial_message";
 
 describe.each(
   JSON.parse(
     fs.readFileSync(path.resolve(__dirname, "../nyt/state.json"), "utf8")
-  ) as { state: any; url: string }[]
+  ).slice(0, 1) as { state: any; url: string }[]
 )("state validation tests", ({ state, url }) => {
-  test("passes validator", () => {
+  test("passes class validator", () => {
     return expect(
       transformAndValidate(StateValidator, state, {
         validator: { whitelist: true }
@@ -18,5 +19,9 @@ describe.each(
         throw e;
       })
     ).resolves.toBeDefined();
+  });
+
+  test("passes json validator", () => {
+    return expect(stateParser.parse(JSON.stringify(state))).toBeDefined();
   });
 });
