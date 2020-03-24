@@ -1,27 +1,28 @@
-import "reflect-metadata";
 import fs from "fs";
 import path from "path";
-import StateValidator from "../src/js/validator";
-import { transformAndValidate } from "class-transformer-validator";
-import { stateParser } from "../src/js/protocol/initial_message";
+import Ajv from "ajv";
+import { getSchemaForSymbol } from "../utils/generate_schemas";
 
 describe.each(
   JSON.parse(
     fs.readFileSync(path.resolve(__dirname, "../nyt/state.json"), "utf8")
-  ).slice(0, 1) as { state: any; url: string }[]
-)("state validation tests", ({ state, url }) => {
-  test("passes class validator", () => {
-    return expect(
-      transformAndValidate(StateValidator, state, {
-        validator: { whitelist: true }
-      }).catch(e => {
-        e.toJSON = () => JSON.stringify({ url, error: e.toString() }, null, 2);
-        throw e;
+  ).map(({ url, state }: any) => [url, state]) as [string, any][]
+)("state validation tests for %s", (url, state) => {
+  let validate: Ajv.ValidateFunction;
+
+  beforeAll(() => {
+    const ajv = new Ajv();
+    validate = ajv.compile(getSchemaForSymbol("NYTState"));
+
+    expect.extend({
+      toValidate: val => ({
+        pass: val,
+        message: () => JSON.stringify(validate.errors)
       })
-    ).resolves.toBeDefined();
+    });
   });
 
-  test("passes json validator", () => {
-    return expect(stateParser.parse(JSON.stringify(state))).toBeDefined();
+  test("passes class validator", () => {
+    return (expect(validate(state)) as any).toValidate();
   });
 });

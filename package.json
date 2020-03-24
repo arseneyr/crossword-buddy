@@ -4,7 +4,7 @@
   "description": "A boilerplate to chrome extension with webpack",
   "scripts": {
     "build": "webpack --mode=production",
-    "generate": "rimraf src/js/__schemas__ && ts-node utils/generate_schemas",
+    "generate": "rimraf src/js/__schemas__ && ts-node utils/write_all_schemas",
     "start": "node utils/webserver.js",
     "test:debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand"
   },
