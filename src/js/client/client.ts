@@ -1,7 +1,8 @@
 import "../../css/client.css";
 import { createPeer } from "../peerjs";
-import store from "./state";
-import generateMainProtocol from "../main_protocol";
+import Peer from "peerjs";
+import newStore, { peerChannelOpened, initializeSharedState } from "../store";
+import Automerge, { change } from "automerge";
 
 /*function generateBoard(state) {
   function createElement(obj) {
@@ -15,13 +16,55 @@ import generateMainProtocol from "../main_protocol";
   return createElement(state.board);
 }*/
 
+const changeHandlers: ((change: Automerge.Diff) => void)[] = [];
+
+changeHandlers.push(({ action, key, value }) => {
+  if (action !== "set") return;
+  if (key === "otherStyles" || key === "gameFonts") {
+    const e = document.createElement("style");
+    e.innerHTML = value;
+    document.head.appendChild(e);
+  } else if (key === "html") {
+    const boardEl = document.createElement("div");
+    document.getElementById("root")!.appendChild(boardEl);
+    boardEl.outerHTML = value;
+  }
+});
+
+function start(conn: Peer.DataConnection) {
+  const store = newStore();
+  store.dispatch(initializeSharedState({ clientFontVersion: 0 }));
+  conn.on("open", () =>
+    store.dispatch(
+      peerChannelOpened({
+        send: msg => conn.send(msg),
+        receive: handler => conn.on("data", handler)
+      })
+    )
+  );
+
+  let curSharedState = store.getState().shared;
+
+  store.subscribe(() => {
+    const newSharedState = store.getState().shared;
+    if (curSharedState) {
+      const changes = Automerge.diff(curSharedState, newSharedState);
+      changes.forEach(c => changeHandlers.forEach(h => h(c)));
+      console.log(changes);
+    }
+    curSharedState = newSharedState;
+  });
+}
+
 chrome.runtime.onMessage.addListener(id => {
   console.log("id" + id);
   const peer = createPeer();
   peer.on("open", () => {
     console.log("opened");
     const conn = peer.connect(id, { reliable: true });
-    const protocolTable = generateMainProtocol(conn);
+    start(conn);
+
+    /*const protocolTable = generateMainProtocol(conn);
     protocolTable.INIT.handle(() => protocolTable.ACK.send());
     protocolTable.INITIAL_STATE.handle(data => {
       const { styles, html } = data;
@@ -33,7 +76,7 @@ chrome.runtime.onMessage.addListener(id => {
       const boardEl = document.createElement("div");
       document.getElementById("root")!.appendChild(boardEl);
       boardEl.outerHTML = html;
-    }, true);
+    }, true);*/
     /*conn.on("open", () => {
       console.log("Connection established!");
       conn.on("data", data => {

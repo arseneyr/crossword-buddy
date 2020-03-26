@@ -3,58 +3,25 @@ import { hot } from "react-hot-loader/root";
 import React, { useCallback } from "react";
 import { createPortal } from "react-dom";
 import { createPeer } from "../peerjs";
-import { useSelector } from "react-redux";
-import store, { State } from "./store";
-import generateProtocol from "../protocol_generator";
-import generateMainProtocol from "../main_protocol";
-import { TsjsonParser, Validated } from "ts-json-validator";
+import { useSelector, useStore } from "react-redux";
+import { peerChannelOpened, State } from "../store";
+import { Store } from "@reduxjs/toolkit";
 
-function getInitialState() {
-  /*const clone = document.getElementById("root").cloneNode(true);
-  const board = clone.querySelector(".layout");
-  let curNode = clone;
-  while (curNode !== board) {
-    if (curNode.childNodes.length > 1) {
-      Array.from(curNode.childNodes).forEach(
-        n => n.contains(board) || n.remove()
-      );
-    }
-    curNode = curNode.firstChild;
-  }
+function startConnection(store: Store) {
+  store.subscribe(() => console.log(store.getState()));
 
-  board.firstChild.remove();
-  board.lastChild.remove();
-  board.querySelector("div[style ^= PuzzleHeader-toolsContainer--]").remove();
-  //document.querySelector("div.layout");
-  return {
-    board: document.querySelector("div.layout").outerHTML,
-    styles: Array.prototype.map.call(
-      document.getElementsByTagName("style"),
-      n => n.innerHTML
-    )
-  };*/
-}
-
-type Val<T> = T extends TsjsonParser<infer R> ? Validated<R> : never;
-
-function startConnection() {
   const peer = createPeer();
   peer.on("connection", conn => {
-    const protocolTable = generateMainProtocol(conn);
+    conn.on("open", () =>
+      store.dispatch(
+        peerChannelOpened({
+          send: msg => conn.send(msg),
+          receive: handler => conn.on("data", handler)
+        })
+      )
+    );
 
     console.log("Connected");
-    protocolTable.ACK.handle(() => {
-      const initialStateMessage = {
-        styles: Array.prototype.map.call(
-          document.getElementsByTagName("style"),
-          n => n.innerHTML
-        ) as string[],
-        html: document.querySelector("div.layout")!.outerHTML,
-        state: store.getState().nytState!
-      };
-      protocolTable.INITIAL_STATE.send(initialStateMessage);
-    });
-    conn.on("open", () => protocolTable.INIT.send());
   });
   peer.on("open", id => {
     chrome.runtime.sendMessage({ type: "spawn", id });
@@ -62,11 +29,12 @@ function startConnection() {
 }
 
 const Button = ({ toolbar }: { toolbar: HTMLDivElement }) => {
-  const ready = useSelector<State>(({ nytState }) => nytState !== null);
+  const ready = useSelector<State>(({ shared }) => Boolean(shared));
+  const store = useStore();
   const onClick = useCallback(() => {
     if (!ready) return;
-    startConnection();
-  }, [ready]);
+    startConnection(store);
+  }, [ready, store]);
   return createPortal(
     <button
       className={

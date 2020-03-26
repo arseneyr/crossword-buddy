@@ -57,6 +57,7 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^1.2.5",
+    "automerge": "^0.13.0",
     "dotenv": "^8.2.0",
     "lzma": "^2.3.2",
     "peerjs": "^1.2.0",

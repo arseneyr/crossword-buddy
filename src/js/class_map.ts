@@ -8,5 +8,12 @@ const classPrefixes = {
   clueHighlighted: "Clue-highlighted",
   clueFilled: "Clue-filled",
   clueSelected: "Clue-selected",
-  clueRelated: "Clue-related"
+  clueRelated: "Clue-related",
+  header: "PuzzleHeader-wrapper",
+  puzzle: "Layout-unveilable",
+  veil: "Veil-veil",
+  veilContent: "ModalBody-content",
+  tools: "ButtonBar-wrapper"
 };
+
+export default classPrefixes;

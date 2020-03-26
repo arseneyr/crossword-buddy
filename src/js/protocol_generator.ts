@@ -38,7 +38,6 @@ export default function generateProtocol<T extends ProtocolDescription>(
   const eventTarget = new EventTarget();
 
   const receiveHandler = (message: any) => {
-    debugger;
     if (!message.type || !Object.keys(validators).includes(message.type)) {
       console.error(`Invalid message received`);
       console.error(message);
@@ -51,7 +50,6 @@ export default function generateProtocol<T extends ProtocolDescription>(
           throw new Error("No payload found");
         }
         if (validator === false) {
-          debugger;
           (event as CustomEvent<typeof validator>).payload = message.payload;
         } else {
           (event as CustomEvent<typeof validator>).payload = validator.validate(

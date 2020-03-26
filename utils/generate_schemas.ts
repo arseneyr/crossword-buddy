@@ -5,7 +5,8 @@ import * as TJS from "typescript-json-schema";
 const settings: TJS.PartialArgs = {
   required: true,
   validationKeywords: ["if", "then", "else"],
-  defaultNumberType: "integer"
+  defaultNumberType: "integer",
+  noExtraProps: true
 };
 
 const program = TJS.programFromConfig(
@@ -33,7 +34,7 @@ export function writeAllSchemas() {
   for (const symbol of symbols.filter(s => /Message$/.test(s))) {
     console.log(symbol);
     fs.writeFileSync(
-      path.resolve(outputDir, `${symbol}.json`),
+      path.resolve(outputDir, `${symbol}.schema.json`),
       JSON.stringify(generator.getSchemaForSymbol(symbol), null, 2),
       "utf8"
     );
