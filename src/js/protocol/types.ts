@@ -66,10 +66,4 @@ export interface NYTState {
   cells: Cell[];
 }
 
-export interface InitialMessage extends NYTState {
-  gameFonts: string;
-
-  otherStyles: string;
-
-  html: string;
-}
+export type StateValidate = NYTState;

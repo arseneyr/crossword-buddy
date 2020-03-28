@@ -31,7 +31,7 @@ export function writeAllSchemas() {
 
   const symbols = generator.getMainFileSymbols(program);
 
-  for (const symbol of symbols.filter(s => /Message$/.test(s))) {
+  for (const symbol of symbols.filter(s => /Validate$/.test(s))) {
     console.log(symbol);
     fs.writeFileSync(
       path.resolve(outputDir, `${symbol}.schema.json`),

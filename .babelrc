@@ -2,7 +2,7 @@
   "presets": [
     "@babel/react",
     "@babel/typescript",
-    ["@babel/preset-env", { "targets": "last 1 chrome version" }]
+    ["@babel/preset-env", { "targets": "last 3 chrome version" }]
   ],
   "plugins": [
     "react-hot-loader/babel",
