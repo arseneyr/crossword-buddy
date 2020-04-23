@@ -27,19 +27,25 @@ function initChangeHandler({ action, key, value }: Diff, state: SharedState) {
 
 function start(conn: Peer.DataConnection) {
   const store = new SyncStore();
+  store.dispatch(
+    addSharedState({
+      clientFontsVersion: JSON.parse(
+        localStorage.getItem("clientFontsVersion") || "0"
+      )
+    })
+  );
   conn.on("open", () => {
     conn.on("data", data => store.messageReceived(data));
     conn.on("close", () => store.peerDisconnected());
     store.peerConnected(msg => conn.send(msg));
   });
 
+  store.registerChangeHandler((_, state) => console.log(state));
   store.registerChangeHandler(initChangeHandler);
   store.registerChangeHandler(({ action, key, value }, state) => {
     if (action === "set" && key === "gameFontsVersion") {
       //debugger;
-      const clientFontsVersion = JSON.parse(
-        localStorage.getItem("clientFontsVersion") || "0"
-      );
+      const clientFontsVersion = state.clientFontsVersion!;
       if (clientFontsVersion >= value) {
         const fonts = localStorage.getItem("games-fonts");
         if (fonts) {

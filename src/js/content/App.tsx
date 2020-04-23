@@ -24,7 +24,6 @@ function startConnection(store: SyncStore) {
 
   store.registerChangeHandler(({ action, key, value }) => {
     if (action === "set" && key === "clientFontsVersion") {
-      debugger;
       if (value < version) {
         store.dispatch(addSharedState({ gameFonts: d }));
       }
